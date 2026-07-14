@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { supabase } from '../supabaseClient'
 
+const DOMAIN = '@agenda.metaverso'
+
 export default function Login() {
-  const [email, setEmail] = useState('')
+  const [login, setLogin] = useState('')
   const [password, setPassword] = useState('')
   const [mode, setMode] = useState('signin')
   const [error, setError] = useState('')
@@ -12,6 +14,7 @@ export default function Login() {
     e.preventDefault()
     setError('')
     setBusy(true)
+    const email = login.trim().toLowerCase() + DOMAIN
     const fn = mode === 'signin'
       ? supabase.auth.signInWithPassword({ email, password })
       : supabase.auth.signUp({ email, password })
@@ -20,12 +23,9 @@ export default function Login() {
     if (err) {
       setError(
         err.message.includes('Invalid login')
-          ? 'E-mail ou senha incorretos. Tente de novo.'
+          ? 'Login ou senha incorretos. Tente de novo.'
           : err.message
       )
-    } else if (mode === 'signup') {
-      setError('Conta criada. Se o projeto exigir confirmação, veja o e-mail antes de entrar.')
-      setMode('signin')
     }
   }
 
@@ -37,9 +37,11 @@ export default function Login() {
           {mode === 'signin' ? 'A conta do casal. Uma só, pros dois.' : 'Criar a conta do casal (só na primeira vez).'}
         </p>
 
-        <label className="p5-label" htmlFor="email">E-mail</label>
-        <input id="email" className="p5-input" type="email" required value={email}
-          onChange={(e) => setEmail(e.target.value)} placeholder="casal@exemplo.com" />
+        <label className="p5-label" htmlFor="login">Login</label>
+        <input id="login" className="p5-input" type="text" required value={login}
+          autoCapitalize="none" autoCorrect="off" pattern="[a-zA-Z0-9._-]+"
+          title="Só letras, números, ponto, traço e underline"
+          onChange={(e) => setLogin(e.target.value)} placeholder="phantomthieves" />
 
         <label className="p5-label" htmlFor="pass">Senha</label>
         <input id="pass" className="p5-input" type="password" required minLength={6} value={password}
