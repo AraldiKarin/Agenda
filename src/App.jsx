@@ -92,11 +92,11 @@ export default function App() {
   if (!session) return <Login />
   if (!activeProfile) return <ProfileSelect profiles={profiles} onPick={pickProfile} onCreated={fetchAll} />
 
-  const partner = activeProfile ? (profiles.find((p) => p.id !== activeProfile.id) || null) : null
-  const stats = activeProfile ? computeStats(activeProfile.id, partner?.id, missions, cards, checkIns) : null
-  const unlocked = stats ? unlockedIds(stats) : new Set()
+  const partner = profiles.find((p) => p.id !== activeProfile.id) || null
+
+  const stats = computeStats(activeProfile.id, partner?.id, missions, cards, checkIns)
+  const unlocked = unlockedIds(stats)
   useEffect(() => {
-    if (!stats) return
     if (prevUnlocked.current === null) {
       prevUnlocked.current = unlocked
       return
@@ -110,14 +110,6 @@ export default function App() {
     }
   })
 
-  if (loadingAuth) return null
-  if (!session) return <Login />
-  if (!activeProfile) return <ProfileSelect profiles={profiles} onPick={pickProfile} onCreated={fetchAll} />
-
-  return (
-    <div className="app-shell">
-      <BgStars />
-
   return (
     <div className="app-shell">
       <BgStars />
@@ -128,10 +120,10 @@ export default function App() {
 
       {view === 'today' && (
         <TodayView
-          checkIns={checkIns}
-          streak={stats.streak}
           missions={missions}
           cards={cards}
+          checkIns={checkIns}
+          streak={stats.streak}
           profiles={profiles}
           me={activeProfile}
           partner={partner}
