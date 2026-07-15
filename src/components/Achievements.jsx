@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ACHIEVEMENTS, computeStats } from '../achievements.js'
 
-const PER_PAGE = 6
+const PER_PAGE = 9
 
 export default function Achievements({ missions, cards, checkIns, me, partner }) {
   const [page, setPage] = useState(0)
