@@ -36,6 +36,26 @@ create table if not exists calling_cards (
   created_at timestamptz default now()
 );
 
+-- achivements
+-- check-ins (1 por perfil por dia, garantido pela constraint)
+create table if not exists check_ins (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  profile_id uuid not null references profiles(id) on delete cascade,
+  date date not null default current_date,
+  created_at timestamptz default now(),
+  unique (profile_id, date)
+);
+
+alter table check_ins enable row level security;
+
+create policy "own check_ins" on check_ins
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+alter publication supabase_realtime add table check_ins;
+
+create index if not exists idx_checkins_profile on check_ins(profile_id, date);
+
 -- rls: tudo pertence a conta autenticada
 alter table profiles enable row level security;
 alter table missions enable row level security;
