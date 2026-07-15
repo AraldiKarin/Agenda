@@ -92,11 +92,11 @@ export default function App() {
   if (!session) return <Login />
   if (!activeProfile) return <ProfileSelect profiles={profiles} onPick={pickProfile} onCreated={fetchAll} />
 
-  const partner = profiles.find((p) => p.id !== activeProfile.id) || null
-
-  const stats = computeStats(activeProfile.id, partner?.id, missions, cards, checkIns)
-  const unlocked = unlockedIds(stats)
+  const partner = activeProfile ? (profiles.find((p) => p.id !== activeProfile.id) || null) : null
+  const stats = activeProfile ? computeStats(activeProfile.id, partner?.id, missions, cards, checkIns) : null
+  const unlocked = stats ? unlockedIds(stats) : new Set()
   useEffect(() => {
+    if (!stats) return
     if (prevUnlocked.current === null) {
       prevUnlocked.current = unlocked
       return
@@ -109,6 +109,14 @@ export default function App() {
       setTimeout(() => setTrophySplash(null), 2200)
     }
   })
+
+  if (loadingAuth) return null
+  if (!session) return <Login />
+  if (!activeProfile) return <ProfileSelect profiles={profiles} onPick={pickProfile} onCreated={fetchAll} />
+
+  return (
+    <div className="app-shell">
+      <BgStars />
 
   return (
     <div className="app-shell">
