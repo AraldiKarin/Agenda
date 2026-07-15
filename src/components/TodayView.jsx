@@ -9,7 +9,7 @@ function todayISO() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-export default function TodayView({ missions, cards, profiles, me, partner, onNew, refresh }) {
+export default function TodayView({ missions, cards, checkIns, streak, profiles, me, partner, onNew, refresh }) {
   const [splash, setSplash] = useState(false)
   const iso = todayISO()
   const now = new Date()
@@ -20,6 +20,13 @@ export default function TodayView({ missions, cards, profiles, me, partner, onNe
   const done = todays.filter((m) => m.done)
 
   const pendingCard = cards.find((c) => c.status === 'pendente' && c.to_profile === me.id)
+  const checkedToday = checkIns.some((c) => c.profile_id === me.id && c.date === iso)
+
+  const doCheckIn = async () => {
+    if (checkedToday) return
+    await supabase.from('check_ins').insert({ profile_id: me.id, date: iso })
+    refresh()
+  }
 
   const ownerName = (m) => {
     if (!m.owner_profile) return 'os dois'
@@ -79,8 +86,12 @@ export default function TodayView({ missions, cards, profiles, me, partner, onNe
             </div>
             <div style={{ fontSize: 12, color: '#3d0a0c', fontWeight: 800, marginTop: 4 }}>
               olá, {me.name.toLowerCase()} · {now.getHours() < 12 ? 'manhã' : now.getHours() < 18 ? 'tarde' : 'noite'}
+              {streak > 0 && ` · 🔥 ${streak} ${streak === 1 ? 'dia' : 'dias'} seguidos`}
             </div>
           </div>
+          <button className={`checkin-btn ${checkedToday ? 'done' : ''}`} onClick={doCheckIn} disabled={checkedToday}>
+            <span>{checkedToday ? 'presente ✓' : 'check-in'}</span>
+          </button>
         </div>
       </header>
 
