@@ -1,81 +1,54 @@
-export function computeStats(profileId, partnerId, missions, cards, checkIns) {
-  const mine = (m) => m.owner_profile === profileId || m.owner_profile === null
+import { motion } from 'framer-motion'
+import { ACHIEVEMENTS, computeStats } from '../achievements.js'
 
-  const myChecks = checkIns.filter((c) => c.profile_id === profileId)
-  const checkDates = new Set(myChecks.map((c) => c.date))
+export default function Achievements({ missions, cards, checkIns, me, partner }) {
+  const stats = computeStats(me.id, partner?.id, missions, cards, checkIns)
+  const total = ACHIEVEMENTS.length
+  const unlocked = ACHIEVEMENTS.filter((a) => stats[a.metric] >= a.target).length
 
-  const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  return (
+    <>
+      <header className="p5-header">
+        <div className="inner">
+          <div>
+            <div className="date-big">Troféus</div>
+            <div style={{ fontSize: 12, color: '#3d0a0c', fontWeight: 800, marginTop: 4 }}>
+              {me.name.toLowerCase()} · {unlocked}/{total} desbloqueados
+            </div>
+          </div>
+        </div>
+      </header>
 
-  // sequencia atual: dias consecutivos terminando hoje ou ontem
-  let streak = 0
-  const cursor = new Date()
-  cursor.setHours(0, 0, 0, 0)
-  if (!checkDates.has(iso(cursor))) cursor.setDate(cursor.getDate() - 1)
-  while (checkDates.has(iso(cursor))) {
-    streak++
-    cursor.setDate(cursor.getDate() - 1)
-  }
-
-  // maior sequencia ja alcancada (trofeu ganho nao se perde)
-  let maxStreak = 0
-  let run = 0
-  let prev = null
-  const sorted = [...checkDates].sort()
-  for (const dt of sorted) {
-    if (prev) {
-      const diff = (new Date(dt + 'T12:00:00') - new Date(prev + 'T12:00:00')) / 86400000
-      run = diff === 1 ? run + 1 : 1
-    } else {
-      run = 1
-    }
-    if (run > maxStreak) maxStreak = run
-    prev = dt
-  }
-
-  // dias em que os dois fizeram check-in
-  let coupleDays = 0
-  if (partnerId) {
-    const partnerDates = new Set(checkIns.filter((c) => c.profile_id === partnerId).map((c) => c.date))
-    for (const dt of checkDates) if (partnerDates.has(dt)) coupleDays++
-  }
-
-  return {
-    streak,
-    maxStreak,
-    missionsDone: missions.filter((m) => m.done && mine(m)).length,
-    principalDone: missions.filter((m) => m.done && m.priority === 'principal' && mine(m)).length,
-    cardsSent: cards.filter((c) => c.from_profile === profileId).length,
-    cardsAccepted: cards.filter((c) => c.status === 'aceito' && (c.from_profile === profileId || c.to_profile === profileId)).length,
-    coupleDays,
-  }
-}
-
-export const ACHIEVEMENTS = [
-  // check-in: dias consecutivos (quebrou, recomeca — mas trofeu ganho fica)
-  { id: 'st1',   name: 'Primeira Infiltração',      desc: 'Primeiro check-in',                metric: 'maxStreak',     target: 1,   glyph: '✦', tier: 1 },
-  { id: 'st3',   name: 'Aquecendo',                 desc: '3 dias consecutivos',              metric: 'maxStreak',     target: 3,   glyph: '⚡', tier: 1 },
-  { id: 'st7',   name: 'Uma Semana no Esconderijo', desc: '7 dias consecutivos',              metric: 'maxStreak',     target: 7,   glyph: '⚡', tier: 2 },
-  { id: 'st15',  name: 'Foco Total',                desc: '15 dias consecutivos',             metric: 'maxStreak',     target: 15,  glyph: '⚡', tier: 3 },
-  { id: 'st30',  name: 'Imparável',                 desc: '30 dias consecutivos',             metric: 'maxStreak',     target: 30,  glyph: '⚡', tier: 4 },
-  { id: 'st100', name: 'Lenda do Metaverso',        desc: '100 dias consecutivos',            metric: 'maxStreak',     target: 100, glyph: '⚡', tier: 5 },
-  // missoes
-  { id: 'ms1',   name: 'Primeiro Roubo',            desc: 'Concluir a primeira missão',       metric: 'missionsDone',  target: 1,   glyph: '✓', tier: 1 },
-  { id: 'ms10',  name: 'Mãos Ágeis',                desc: 'Concluir 10 missões',              metric: 'missionsDone',  target: 10,  glyph: '✓', tier: 2 },
-  { id: 'ms50',  name: 'Cinquenta Tesouros',        desc: 'Concluir 50 missões',              metric: 'missionsDone',  target: 50,  glyph: '✓', tier: 3 },
-  { id: 'ms100', name: 'Cem Tesouros',              desc: 'Concluir 100 missões',             metric: 'missionsDone',  target: 100, glyph: '✓', tier: 4 },
-  { id: 'ms250', name: 'Mestre do Ofício',          desc: 'Concluir 250 missões',             metric: 'missionsDone',  target: 250, glyph: '✓', tier: 5 },
-  // principais
-  { id: 'pr5',   name: 'Alvo Prioritário',          desc: 'Concluir 5 missões principais',    metric: 'principalDone', target: 5,   glyph: '◆', tier: 2 },
-  { id: 'pr25',  name: 'Caça aos Chefes',           desc: 'Concluir 25 missões principais',   metric: 'principalDone', target: 25,  glyph: '◆', tier: 4 },
-  // calling cards
-  { id: 'cc1',   name: 'Primeiro Aviso',            desc: 'Enviar um calling card',           metric: 'cardsSent',     target: 1,   glyph: '✉', tier: 1 },
-  { id: 'cca1',  name: 'Convite Aceito',            desc: 'Ter um calling card aceito',       metric: 'cardsAccepted', target: 1,   glyph: '✉', tier: 2 },
-  { id: 'cca10', name: 'Dupla Perfeita',            desc: '10 calling cards aceitos',         metric: 'cardsAccepted', target: 10,  glyph: '✉', tier: 3 },
-  // casal
-  { id: 'cp7',   name: 'Juntos no Esconderijo',     desc: 'Check-in dos dois no mesmo dia, 7 vezes',  metric: 'coupleDays', target: 7,  glyph: '♥', tier: 3 },
-  { id: 'cp30',  name: 'Coração Roubado',           desc: 'Check-in dos dois no mesmo dia, 30 vezes', metric: 'coupleDays', target: 30, glyph: '♥', tier: 5 },
-]
-
-export function unlockedIds(stats) {
-  return new Set(ACHIEVEMENTS.filter((a) => stats[a.metric] >= a.target).map((a) => a.id))
+      <main className="view-wrap">
+        <div className="trophy-grid">
+          {ACHIEVEMENTS.map((a, i) => {
+            const value = stats[a.metric]
+            const done = value >= a.target
+            const pct = Math.min(100, Math.round((value / a.target) * 100))
+            return (
+              <motion.div
+                key={a.id}
+                className={`trophy ${done ? 'unlocked' : ''} tier-${a.tier}`}
+                initial={{ opacity: 0, scale: 0.7 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.03, duration: 0.25, ease: [0.3, 1.5, 0.4, 1] }}
+              >
+                <div className="trophy-badge" aria-hidden="true">
+                  <span className="trophy-glyph">{a.glyph}</span>
+                </div>
+                <div className="trophy-info">
+                  <div className="trophy-name">{a.name}</div>
+                  <div className="trophy-desc">{a.desc}</div>
+                  <div className="trophy-bar">
+                    <div style={{ width: `${pct}%` }} />
+                  </div>
+                  <div className="trophy-count">{done ? 'desbloqueado' : `${value}/${a.target}`}</div>
+                </div>
+              </motion.div>
+            )
+          })}
+        </div>
+      </main>
+    </>
+  )
 }
