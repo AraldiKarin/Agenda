@@ -41,7 +41,8 @@ export default function MonthView({ missions, profiles, me, onNew }) {
   const ownerColor = (m) => (!m.owner_profile ? 'var(--p5-red)' : profiles.find((p) => p.id === m.owner_profile)?.color || 'var(--p5-cyan)')
 
   const Item = ({ m }) => (
-    <div className="mission-card" style={{ padding: '8px 12px', borderLeftColor: m.priority === 'principal' ? 'var(--p5-red)' : 'var(--p5-gray)', opacity: m.done ? 0.45 : 1 }}>
+    <div className="mission-card" onClick={() => onNew({ mission: m })} title="Clique para editar"
+      style={{ padding: '8px 12px', cursor: 'pointer', borderLeftColor: m.priority === 'principal' ? 'var(--p5-red)' : 'var(--p5-gray)', opacity: m.done ? 0.45 : 1 }}>
       <div>
         <div className="m-title" style={{ fontSize: 13, textDecoration: m.done ? 'line-through' : 'none' }}>
           {m.title} — <span style={{ color: ownerColor(m) }}>{ownerName(m)}</span>
@@ -91,7 +92,7 @@ export default function MonthView({ missions, profiles, me, onNew }) {
                 <span key={d} className={`cal-dow ${i === 0 ? 'dom' : i === 6 ? 'sab' : ''}`}>{d}</span>
               ))}
             </div>
-            <div className="cal-grid" key={`${ym.y}-${ym.m}`}>
+            <div className="cal-grid" key={`${ym.y}-${ym.m}-${filter}`}>
               {Array.from({ length: firstDow }).map((_, i) => <span key={`e${i}`} />)}
               {Array.from({ length: daysInMonth }).map((_, i) => {
                 const d = i + 1
