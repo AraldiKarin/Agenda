@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '../supabaseClient'
+import { catColor, catLabel } from '../categories.js'
 
 const DOW = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB']
 
@@ -64,7 +65,7 @@ export default function TodayView({ missions, cards, checkIns, streak, profiles,
       <div>
         <div className="m-title">{m.title} — <span style={{ color: m.owner_profile ? (profiles.find(p => p.id === m.owner_profile)?.color || 'var(--p5-cyan)') : 'var(--p5-red)' }}>{ownerName(m)}</span></div>
         <div className="m-sub">
-          {m.time ? m.time.slice(0, 5) : 'sem hora'} · {m.period} · missão {m.priority}
+          <i className="cat-dot" style={{ background: catColor(m.category) }} /> {catLabel(m.category)} · {m.time ? m.time.slice(0, 5) : 'sem hora'} · {m.period} · missão {m.priority}
         </div>
       </div>
       <button
