@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { supabase } from '../supabaseClient'
+import { CATEGORIES } from '../categories.js'
 
 export default function MissionModal({ preset, profiles, me, onClose, onSaved }) {
   const [title, setTitle] = useState('')
@@ -9,6 +10,7 @@ export default function MissionModal({ preset, profiles, me, onClose, onSaved })
   const [period, setPeriod] = useState(preset.period || 'dia')
   const [owner, setOwner] = useState(me.id)
   const [priority, setPriority] = useState('secundaria')
+  const [category, setCategory] = useState('outro')
   const [busy, setBusy] = useState(false)
 
   const save = async (e) => {
@@ -21,6 +23,7 @@ export default function MissionModal({ preset, profiles, me, onClose, onSaved })
       period: time ? (time >= '18:00' ? 'noite' : 'dia') : period,
       owner_profile: owner === 'both' ? null : owner,
       priority,
+      category,
       created_by: me.id,
     })
     setBusy(false)
@@ -78,6 +81,17 @@ export default function MissionModal({ preset, profiles, me, onClose, onSaved })
           <button type="button" className={owner === 'both' ? 'on' : ''} onClick={() => setOwner('both')}>
             <span>Os dois</span>
           </button>
+        </div>
+
+        <label className="p5-label">Categoria</label>
+        <div className="owner-pick">
+          {CATEGORIES.map((c) => (
+            <button key={c.id} type="button" className={category === c.id ? 'on' : ''}
+              style={category === c.id ? { background: c.color, color: '#101014' } : {}}
+              onClick={() => setCategory(c.id)}>
+              <span><i className="cat-dot" style={{ background: c.color }} /> {c.label}</span>
+            </button>
+          ))}
         </div>
 
         <label className="p5-label">Prioridade</label>
