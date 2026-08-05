@@ -4,19 +4,20 @@ import { supabase } from '../supabaseClient'
 import { CATEGORIES } from '../categories.js'
 
 export default function MissionModal({ preset, profiles, me, onClose, onSaved }) {
-  const [title, setTitle] = useState('')
-  const [date, setDate] = useState(preset.date || '')
-  const [time, setTime] = useState('')
-  const [period, setPeriod] = useState(preset.period || 'dia')
-  const [owner, setOwner] = useState(me.id)
-  const [priority, setPriority] = useState('secundaria')
-  const [category, setCategory] = useState('outro')
+  const editing = preset.mission || null
+  const [title, setTitle] = useState(editing?.title || '')
+  const [date, setDate] = useState(editing?.date || preset.date || '')
+  const [time, setTime] = useState(editing?.time ? editing.time.slice(0, 5) : '')
+  const [period, setPeriod] = useState(editing?.period || preset.period || 'dia')
+  const [owner, setOwner] = useState(editing ? editing.owner_profile : me.id)
+  const [priority, setPriority] = useState(editing?.priority || 'secundaria')
+  const [category, setCategory] = useState(editing?.category || 'outro')
   const [busy, setBusy] = useState(false)
 
   const save = async (e) => {
     e.preventDefault()
     setBusy(true)
-    const { error } = await supabase.from('missions').insert({
+    const data = {
       title,
       date,
       time: time || null,
@@ -24,10 +25,21 @@ export default function MissionModal({ preset, profiles, me, onClose, onSaved })
       owner_profile: owner,
       priority,
       category,
-      created_by: me.id,
-    })
+    }
+    const { error } = editing
+      ? await supabase.from('missions').update(data).eq('id', editing.id)
+      : await supabase.from('missions').insert({ ...data, created_by: me.id })
     setBusy(false)
     if (!error) onSaved()
+  }
+
+  const remove = async () => {
+    if (!editing) return
+    if (!window.confirm(`Excluir a missão "${editing.title}"?`)) return
+    setBusy(true)
+    await supabase.from('missions').delete().eq('id', editing.id)
+    setBusy(false)
+    onSaved()
   }
 
   return (
@@ -40,7 +52,7 @@ export default function MissionModal({ preset, profiles, me, onClose, onSaved })
         animate={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
         transition={{ duration: 0.25, ease: [0.3, 1.3, 0.4, 1] }}
       >
-        <div className="modal-title">Nova missão</div>
+        <div className="modal-title">{editing ? 'Editar missão' : 'Nova missão'}</div>
 
         <label className="p5-label" htmlFor="m-title">O que precisa ser feito</label>
         <input id="m-title" className="p5-input" required autoFocus value={title}
@@ -79,9 +91,15 @@ export default function MissionModal({ preset, profiles, me, onClose, onSaved })
             </button>
           ))}
         </div>
-        <p style={{ fontSize: 11, color: 'var(--p5-gray)', marginTop: 6 }}>
-          Missão dos dois? Manda um calling card — aceito, vira missão compartilhada.
-        </p>
+        {owner === null ? (
+          <p style={{ fontSize: 11, color: 'var(--p5-gray)', marginTop: 6 }}>
+            Missão dos dois (veio de um calling card). Escolher um nome acima a torna individual.
+          </p>
+        ) : (
+          <p style={{ fontSize: 11, color: 'var(--p5-gray)', marginTop: 6 }}>
+            Missão dos dois? Manda um calling card — aceito, vira missão compartilhada.
+          </p>
+        )}
 
         <label className="p5-label">Categoria</label>
         <div className="owner-pick">
@@ -104,13 +122,19 @@ export default function MissionModal({ preset, profiles, me, onClose, onSaved })
           </button>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+        <div style={{ display: 'flex', gap: 10, marginTop: 24, flexWrap: 'wrap' }}>
           <button className="p5-btn red" type="submit" disabled={busy}>
-            <span>{busy ? '...' : 'Criar missão'}</span>
+            <span>{busy ? '...' : editing ? 'Salvar' : 'Criar missão'}</span>
           </button>
           <button className="p5-btn ghost" type="button" onClick={onClose}>
             <span>Cancelar</span>
           </button>
+          {editing && (
+            <button className="p5-btn ghost" type="button" onClick={remove} disabled={busy}
+              style={{ outlineColor: 'var(--p5-red)', color: 'var(--p5-red)', marginLeft: 'auto' }}>
+              <span>Excluir</span>
+            </button>
+          )}
         </div>
       </motion.form>
     </div>
