@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { catColor, catLabel } from '../categories.js'
 
 const DOWS = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB']
 const MONTHS = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO']
@@ -9,14 +10,21 @@ const iso = (y, m, d) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).pad
 export default function MonthView({ missions, profiles, me, onNew }) {
   const now = new Date()
   const [ym, setYm] = useState({ y: now.getFullYear(), m: now.getMonth() })
+  const [filter, setFilter] = useState('todos')
   const [selected, setSelected] = useState(iso(now.getFullYear(), now.getMonth(), now.getDate()))
 
   const todayIso = iso(now.getFullYear(), now.getMonth(), now.getDate())
   const daysInMonth = new Date(ym.y, ym.m + 1, 0).getDate()
   const firstDow = new Date(ym.y, ym.m, 1).getDay()
 
+  const visible = missions.filter((m) => {
+    if (filter === 'todos') return true
+    if (filter === 'both') return m.owner_profile === null
+    return m.owner_profile === filter
+  })
+
   const byDay = {}
-  for (const m of missions) (byDay[m.date] ||= []).push(m)
+  for (const m of visible) (byDay[m.date] ||= []).push(m)
 
   const nav = (delta) => {
     let m = ym.m + delta, y = ym.y
@@ -38,7 +46,7 @@ export default function MonthView({ missions, profiles, me, onNew }) {
         <div className="m-title" style={{ fontSize: 13, textDecoration: m.done ? 'line-through' : 'none' }}>
           {m.title} — <span style={{ color: ownerColor(m) }}>{ownerName(m)}</span>
         </div>
-        <div className="m-sub">{m.time ? m.time.slice(0, 5) : 'sem hora'}</div>
+        <div className="m-sub"><i className="cat-dot" style={{ background: catColor(m.category) }} /> {catLabel(m.category)} · {m.time ? m.time.slice(0, 5) : 'sem hora'}</div>
       </div>
     </div>
   )
@@ -62,6 +70,20 @@ export default function MonthView({ missions, profiles, me, onNew }) {
       </header>
 
       <main className="view-wrap">
+        <div className="owner-pick" style={{ marginBottom: 16 }}>
+          <button type="button" className={filter === 'todos' ? 'on' : ''} onClick={() => setFilter('todos')}>
+            <span>Todos</span>
+          </button>
+          {profiles.map((p) => (
+            <button key={p.id} type="button" className={filter === p.id ? 'on' : ''} onClick={() => setFilter(p.id)}>
+              <span>{p.name}</span>
+            </button>
+          ))}
+          <button type="button" className={filter === 'both' ? 'on' : ''} onClick={() => setFilter('both')}>
+            <span>Os dois</span>
+          </button>
+        </div>
+
         <div className="month-layout">
           <div>
             <div className="cal-grid" style={{ marginBottom: 4 }}>
@@ -83,16 +105,21 @@ export default function MonthView({ missions, profiles, me, onNew }) {
                   dISO === todayIso ? 'today' : '',
                   dISO === selected ? 'selected' : '',
                 ].join(' ')
+                const dayMissions = byDay[dISO] || []
                 return (
                   <button key={d} className={cls} style={{ animationDelay: `${i * 0.015}s` }} onClick={() => setSelected(dISO)}>
                     {d}
-                    <div className={`cal-dot ${byDay[dISO]?.length ? '' : 'empty'}`} />
+                    <div className="cal-dots">
+                      {dayMissions.slice(0, 3).map((m) => (
+                        <span key={m.id} className="cal-dot" style={{ background: catColor(m.category) }} />
+                      ))}
+                    </div>
                   </button>
                 )
               })}
             </div>
             <p style={{ fontSize: 11, color: 'var(--p5-gray)', marginTop: 10 }}>
-              ◆ dia com missões · números apagados = dias passados
+              ◆ cores = categorias das missões · números apagados = dias passados
             </p>
           </div>
 
