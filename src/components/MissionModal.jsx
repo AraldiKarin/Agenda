@@ -21,7 +21,7 @@ export default function MissionModal({ preset, profiles, me, onClose, onSaved })
       date,
       time: time || null,
       period: time ? (time >= '18:00' ? 'noite' : 'dia') : period,
-      owner_profile: owner === 'both' ? null : owner,
+      owner_profile: owner,
       priority,
       category,
       created_by: me.id,
@@ -78,10 +78,10 @@ export default function MissionModal({ preset, profiles, me, onClose, onSaved })
               <span>{p.name}</span>
             </button>
           ))}
-          <button type="button" className={owner === 'both' ? 'on' : ''} onClick={() => setOwner('both')}>
-            <span>Os dois</span>
-          </button>
         </div>
+        <p style={{ fontSize: 11, color: 'var(--p5-gray)', marginTop: 6 }}>
+          Missão dos dois? Manda um calling card — aceito, vira missão compartilhada.
+        </p>
 
         <label className="p5-label">Categoria</label>
         <div className="owner-pick">
