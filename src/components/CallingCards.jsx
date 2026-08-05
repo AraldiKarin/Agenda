@@ -8,6 +8,7 @@ export default function CallingCards({ cards, me, partner, refresh }) {
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
   const [category, setCategory] = useState('saida')
+  const [editing, setEditing] = useState(null)
   const [busy, setBusy] = useState(false)
 
   const received = cards.filter((c) => c.to_profile === me.id)
@@ -17,16 +18,46 @@ export default function CallingCards({ cards, me, partner, refresh }) {
     e.preventDefault()
     if (!partner) return
     setBusy(true)
-    await supabase.from('calling_cards').insert({
-      from_profile: me.id,
-      to_profile: partner.id,
-      message,
-      date: date || null,
-      time: time || null,
-      category,
-    })
-    setMessage(''); setDate(''); setTime('')
+    if (editing) {
+      await supabase.from('calling_cards').update({
+        message,
+        date: date || null,
+        time: time || null,
+        category,
+      }).eq('id', editing.id)
+    } else {
+      await supabase.from('calling_cards').insert({
+        from_profile: me.id,
+        to_profile: partner.id,
+        message,
+        date: date || null,
+        time: time || null,
+        category,
+      })
+    }
+    setMessage(''); setDate(''); setTime(''); setCategory('saida'); setEditing(null)
     setBusy(false)
+    refresh()
+  }
+
+  const startEdit = (c) => {
+    setEditing(c)
+    setMessage(c.message)
+    setDate(c.date || '')
+    setTime(c.time ? c.time.slice(0, 5) : '')
+    setCategory(c.category || 'outro')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const cancelEdit = () => {
+    setEditing(null)
+    setMessage(''); setDate(''); setTime(''); setCategory('saida')
+  }
+
+  const removeCard = async (c) => {
+    if (!window.confirm('Excluir este calling card?')) return
+    await supabase.from('calling_cards').delete().eq('id', c.id)
+    if (editing?.id === c.id) cancelEdit()
     refresh()
   }
 
@@ -70,6 +101,18 @@ export default function CallingCards({ cards, me, partner, refresh }) {
           </button>
         </div>
       )}
+      {mine && (
+        <div className="cc-actions">
+          {c.status !== 'aceito' && (
+            <button className="p5-btn ghost" style={{ outlineColor: 'var(--p5-black)', color: 'var(--p5-black)', padding: '6px 14px', fontSize: 12 }} onClick={() => startEdit(c)}>
+              <span>Editar</span>
+            </button>
+          )}
+          <button className="p5-btn ghost" style={{ outlineColor: 'var(--p5-red)', color: 'var(--p5-red)', padding: '6px 14px', fontSize: 12 }} onClick={() => removeCard(c)}>
+            <span>Excluir</span>
+          </button>
+        </div>
+      )}
     </motion.div>
   )
 
@@ -84,7 +127,7 @@ export default function CallingCards({ cards, me, partner, refresh }) {
       <main className="view-wrap">
         {partner ? (
           <form onSubmit={send} className="login-box" style={{ maxWidth: '100%', marginBottom: 10 }}>
-            <div className="modal-title">Enviar aviso para {partner.name}</div>
+            <div className="modal-title">{editing ? 'Editar calling card' : `Enviar aviso para ${partner.name}`}</div>
             <label className="p5-label" htmlFor="cc-msg">Mensagem</label>
             <input id="cc-msg" className="p5-input" required value={message} maxLength={140}
               placeholder="Sexta, 20h. Cinema. Sua presença é inegociável."
@@ -109,10 +152,15 @@ export default function CallingCards({ cards, me, partner, refresh }) {
                 </button>
               ))}
             </div>
-            <div style={{ marginTop: 18 }}>
+            <div style={{ marginTop: 18, display: 'flex', gap: 10 }}>
               <button className="p5-btn red" type="submit" disabled={busy}>
-                <span>{busy ? '...' : 'Mandar o cartão'}</span>
+                <span>{busy ? '...' : editing ? 'Salvar alterações' : 'Mandar o cartão'}</span>
               </button>
+              {editing && (
+                <button className="p5-btn ghost" type="button" onClick={cancelEdit}>
+                  <span>Cancelar edição</span>
+                </button>
+              )}
             </div>
             <p style={{ fontSize: 11, color: 'var(--p5-gray)', marginTop: 10 }}>
               Se tiver data, ao ser aceito vira missão dos dois automaticamente — já com a categoria.
