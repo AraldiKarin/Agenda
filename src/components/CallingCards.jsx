@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { supabase } from '../supabaseClient'
+import { CATEGORIES, catColor, catLabel } from '../categories.js'
 
 export default function CallingCards({ cards, me, partner, refresh }) {
   const [message, setMessage] = useState('')
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
+  const [category, setCategory] = useState('saida')
   const [busy, setBusy] = useState(false)
 
   const received = cards.filter((c) => c.to_profile === me.id)
@@ -21,6 +23,7 @@ export default function CallingCards({ cards, me, partner, refresh }) {
       message,
       date: date || null,
       time: time || null,
+      category,
     })
     setMessage(''); setDate(''); setTime('')
     setBusy(false)
@@ -37,6 +40,7 @@ export default function CallingCards({ cards, me, partner, refresh }) {
         period: c.time && c.time >= '18:00' ? 'noite' : 'dia',
         owner_profile: null,
         priority: 'principal',
+        category: c.category || 'outro',
         created_by: me.id,
       })
     }
@@ -51,7 +55,8 @@ export default function CallingCards({ cards, me, partner, refresh }) {
       </span>
       <p className="cc-msg">“{c.message}”</p>
       <p className="cc-meta">
-        {mine ? `para ${partner?.name || '?'}` : `de ${partner?.name || '?'}`}
+        <i className="cat-dot" style={{ background: catColor(c.category) }} /> {catLabel(c.category)}
+        {' · '}{mine ? `para ${partner?.name || '?'}` : `de ${partner?.name || '?'}`}
         {c.date && ` · ${c.date.split('-').reverse().join('/')}`}
         {c.time && ` às ${c.time.slice(0, 5)}`}
       </p>
@@ -94,13 +99,23 @@ export default function CallingCards({ cards, me, partner, refresh }) {
                 <input id="cc-time" className="p5-input" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
               </div>
             </div>
+            <label className="p5-label">Categoria</label>
+            <div className="owner-pick">
+              {CATEGORIES.map((c) => (
+                <button key={c.id} type="button" className={category === c.id ? 'on' : ''}
+                  style={category === c.id ? { background: c.color, color: '#101014' } : {}}
+                  onClick={() => setCategory(c.id)}>
+                  <span><i className="cat-dot" style={{ background: c.color }} /> {c.label}</span>
+                </button>
+              ))}
+            </div>
             <div style={{ marginTop: 18 }}>
               <button className="p5-btn red" type="submit" disabled={busy}>
                 <span>{busy ? '...' : 'Mandar o cartão'}</span>
               </button>
             </div>
             <p style={{ fontSize: 11, color: 'var(--p5-gray)', marginTop: 10 }}>
-              Se tiver data, ao ser aceito vira missão dos dois automaticamente.
+              Se tiver data, ao ser aceito vira missão dos dois automaticamente — já com a categoria.
             </p>
           </form>
         ) : (
