@@ -241,8 +241,10 @@ body {
 .cal-day.past { opacity: 0.3; }
 .cal-day.today { background: var(--p5-red); color: var(--p5-white); opacity: 1; }
 .cal-day.selected { background: var(--p5-white); color: var(--p5-black); opacity: 1; }
-.cal-dot { width: 5px; height: 5px; background: var(--p5-red); transform: rotate(45deg); margin: 2px auto 0; }
-.cal-dot.empty { background: transparent; }
+.cal-dots { display: flex; gap: 3px; justify-content: center; height: 6px; margin-top: 2px; }
+.cal-dot { width: 5px; height: 5px; background: var(--p5-red); transform: rotate(45deg); }
+
+.cat-dot { display: inline-block; width: 7px; height: 7px; transform: rotate(45deg); margin-right: 2px; }
 @keyframes stamp {
   from { transform: skewX(-4deg) scale(2.2); opacity: 0; }
   to   { transform: skewX(-4deg) scale(1); opacity: 1; }
@@ -421,23 +423,20 @@ body {
 }
 
 /* trofeus */
-.trophy-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-@media (max-width: 900px) { .trophy-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 600px) { .trophy-grid { grid-template-columns: 1fr; } }
+.trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
 .trophy {
-  display: flex; gap: 16px; align-items: center;
+  display: flex; gap: 14px; align-items: center;
   background: var(--p5-panel);
-  padding: 22px 18px;
-  min-height: 120px;
+  padding: 14px;
   transform: skewX(-2deg);
-  border-left: 5px solid #2c2c32;
+  border-left: 4px solid #2c2c32;
   filter: grayscale(1);
   opacity: 0.6;
 }
 .trophy > * { transform: skewX(2deg); }
 .trophy.unlocked { filter: none; opacity: 1; border-left-color: var(--p5-red); }
 .trophy-badge {
-  width: 72px; height: 72px; min-width: 72px;
+  width: 62px; height: 62px; min-width: 62px;
   background: #2c2c32;
   transform: skewX(2deg) rotate(45deg);
   display: flex; align-items: center; justify-content: center;
