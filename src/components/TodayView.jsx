@@ -63,7 +63,7 @@ export default function TodayView({ missions, cards, checkIns, streak, profiles,
   const Card = ({ m }) => (
     <motion.div layout className={`mission-card ${m.priority} ${m.done ? 'done' : ''}`}
       initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }}>
-      <div>
+      <div onClick={() => onNew({ mission: m })} style={{ cursor: 'pointer' }} title="Clique para editar">
         <div className="m-title">{m.title} — <span style={{ color: m.owner_profile ? (profiles.find(p => p.id === m.owner_profile)?.color || 'var(--p5-cyan)') : 'var(--p5-red)' }}>{ownerName(m)}</span></div>
         <div className="m-sub">
           <i className="cat-dot" style={{ background: catColor(m.category) }} /> {catLabel(m.category)} · {m.time ? m.time.slice(0, 5) : 'sem hora'} · {m.period} · missão {m.priority}
