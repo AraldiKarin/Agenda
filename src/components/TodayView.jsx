@@ -53,6 +53,7 @@ export default function TodayView({ missions, cards, checkIns, streak, profiles,
         period: c.time && c.time >= '18:00' ? 'noite' : 'dia',
         owner_profile: null,
         priority: 'principal',
+        category: c.category || 'outro',
         created_by: me.id,
       })
     }
