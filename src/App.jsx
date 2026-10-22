@@ -28,7 +28,9 @@ export default function App() {
   const [cards, setCards] = useState([])
   const [checkIns, setCheckIns] = useState([])
   const [trophySplash, setTrophySplash] = useState(null)
+  const [loadedData, setLoadedData] = useState(false)
   const prevUnlocked = useRef(null)
+  const notifiedRef = useRef(new Set())
   const [modal, setModal] = useState(null)
 
   useEffect(() => {
@@ -51,6 +53,7 @@ export default function App() {
     if (m.data) setMissions(m.data)
     if (c.data) setCards(c.data)
     if (k.data) setCheckIns(k.data)
+    setLoadedData(true)
   }, [])
 
   useEffect(() => {
@@ -79,6 +82,9 @@ export default function App() {
   const pickProfile = (p) => {
     localStorage.setItem('metaverso_profile', p.id)
     setActiveProfile(p)
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
     setWipeKey((k) => k + 1)
   }
 
@@ -106,8 +112,35 @@ export default function App() {
     }
   })
 
+  useEffect(() => {
+    if (!activeProfile) return
+    const check = () => {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return
+      const now = new Date()
+      const iso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+      for (const m of missions) {
+        if (m.done || m.date !== iso || !m.time) continue
+        if (m.owner_profile && m.owner_profile !== activeProfile.id) continue
+        const [h, min] = m.time.split(':').map(Number)
+        const t = new Date()
+        t.setHours(h, min, 0, 0)
+        const diff = (t - now) / 60000
+        if (diff > 0 && diff <= 15 && !notifiedRef.current.has(m.id)) {
+          notifiedRef.current.add(m.id)
+          new Notification('⏰ Missão se aproximando', {
+            body: `${m.title} · ${m.time.slice(0, 5)}`,
+          })
+        }
+      }
+    }
+    check()
+    const id = setInterval(check, 60000)
+    return () => clearInterval(id)
+  }, [missions, activeProfile])
+
   if (loadingAuth) return null
   if (!session) return <Login />
+  if (!loadedData) return null
   if (!activeProfile) return <ProfileSelect profiles={profiles} onPick={pickProfile} onCreated={fetchAll} />
 
   return (
